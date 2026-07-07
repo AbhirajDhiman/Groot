@@ -1,7 +1,12 @@
 const express = require("express");
 const yargs = require("yargs/yargs");
 const { hideBin } = require("yargs/helpers");
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+const bodyParser = require("body-parser");
+const cors = require("cors");
 
+dotenv.config();
 const { initRepo } = require("./controllers/init");
 const { addFile } = require("./controllers/add");
 const { commitChanges } = require("./controllers/commit");
@@ -10,40 +15,58 @@ const { pushChanges } = require("./controllers/push");
 const { revertCommit } = require("./controllers/revert");
 
 const app = express();
+app.use(bodyParser.json());
+app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {
   res.json({ message: "Backend is running" });
 });
 
-function startServer() {
+async function startServer() {
   const port = process.env.PORT || 3000;
-  app.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
-  });
+  const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017/groot";
+
+  try {
+    await mongoose.connect(mongoUri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+
+    console.log("Connected to MongoDB");
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+  } catch (err) {
+    console.error("Failed to connect to MongoDB", err);
+    process.exit(1);
+  }
 }
 
 const parser = yargs(hideBin(process.argv))
+  .command("start", "Start the backend server", () => {}, async () => {
+    await startServer();
+  })
   .command("init", "Initialize a new repository", () => {}, async () => {
     await initRepo();
     process.exit(0);
   })
   .command(
-    "add <file..>",
-    "Add a new file to the repository",
+    "add <files..>",
+    "Add one or more files to the repository",
     (yargs) => {
-      yargs.positional("file", {
-        describe: "File to add to the staging area",
+      yargs.positional("files", {
+        describe: "Files to add to the staging area",
         type: "string",
         array: true,
       });
     },
     async (argv) => {
-      const fileArg = process.argv.slice(3).join(" ");
-      await addFile(fileArg);
+      await addFile(argv.files);
       process.exit(0);
     }
-  ).command(
+  )
+  .command(
     "pull",
     "Pull the latest changes from the remote repository",
     () => {},
@@ -51,7 +74,8 @@ const parser = yargs(hideBin(process.argv))
       await pullRepo();
       process.exit(0);
     }
-  ).command(
+  )
+  .command(
     "commit <message>",
     "Commit the staged changes",
     (yargs) => {
@@ -64,7 +88,8 @@ const parser = yargs(hideBin(process.argv))
       await commitChanges(argv.message);
       process.exit(0);
     }
-  ).command(
+  )
+  .command(
     "push",
     "Push the local changes to the remote repository",
     () => {},
@@ -72,7 +97,8 @@ const parser = yargs(hideBin(process.argv))
       await pushChanges();
       process.exit(0);
     }
-  ).command(
+  )
+  .command(
     "revert <commitHash>",
     "Revert a specific commit",
     (yargs) => {
@@ -90,9 +116,9 @@ const parser = yargs(hideBin(process.argv))
   .strict();
 
 (async () => {
-  const argv = await parser.parse();    
+  const argv = await parser.parse();
 
   if (argv._.length === 0) {
-    startServer();
+    await startServer();
   }
 })();
