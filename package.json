@@ -8,6 +8,8 @@
   },
   "scripts": {
     "start": "node backend/server.js start",
+    "backend": "node backend/server.js start",
+    "frontend": "npm --prefix frontend-main run dev",
     "test": "node backend/test/test.js"
   },
   "author": "Groot Development Team",
