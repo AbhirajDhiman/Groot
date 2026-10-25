@@ -1,47 +1,85 @@
-const fs = require("fs").promises;
-const path = require("path");
+const fs = require('fs').promises;
+const path = require('path');
+const {
+  ensureRepoRoot,
+  getRelativeFiles,
+} = require('../utils/repoUtils');
 
-const repoBase = path.resolve(__dirname, '..');
-
-async function revertCommit(commitHash) {
-  if (!commitHash) {
-    console.log("No commit hash specified to revert.");
-    return;
+/**
+ * Reverts the working directory to the exact snapshot of a specified commit ID.
+ * Supports full commit UUID or unique commit prefix.
+ */
+async function revertCommit(commitIdentifier) {
+  if (!commitIdentifier || typeof commitIdentifier !== 'string') {
+    console.error('Error: Commit ID or prefix is required. Usage: groot revert <commitID>');
+    return { success: false, error: 'Commit ID is required' };
   }
 
-  const repoPath = path.join(repoBase, ".Groot");
-  const commitDir = path.join(repoPath, "commits", commitHash);
-  const workspaceRoot = repoBase;
-
   try {
-    const entries = await fs.readdir(commitDir, { withFileTypes: true });
-    if (entries.length === 0) {
-      console.log(`Commit ${commitHash} contains no files to restore.`);
-      return;
+    const { rootDir, grootDir } = await ensureRepoRoot();
+    const commitsPath = path.join(grootDir, 'commits');
+
+    const entries = await fs.readdir(commitsPath, { withFileTypes: true });
+    const commitDirs = entries
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name);
+
+    // Match exact or prefix
+    const matched = commitDirs.filter(
+      (dir) => dir.toLowerCase() === commitIdentifier.toLowerCase() ||
+               dir.toLowerCase().startsWith(commitIdentifier.toLowerCase())
+    );
+
+    if (matched.length === 0) {
+      console.error(`Error: Commit "${commitIdentifier}" not found in .groot/commits.`);
+      return { success: false, error: 'Commit not found' };
     }
 
-    for (const entry of entries) {
-      if (!entry.isFile()) {
-        continue;
-      }
-
-      if (entry.name === "commit.json") {
-        continue;
-      }
-
-      const sourcePath = path.join(commitDir, entry.name);
-      const destinationPath = path.join(workspaceRoot, entry.name);
-      await fs.copyFile(sourcePath, destinationPath);
-      console.log(`Restored ${entry.name} from commit ${commitHash}.`);
+    if (matched.length > 1) {
+      console.error(
+        `Error: Short commit ID "${commitIdentifier}" is ambiguous. Matches: ${matched.join(', ')}`
+      );
+      return { success: false, error: 'Ambiguous commit ID' };
     }
 
-    console.log(`Commit ${commitHash} reverted successfully.`);
+    const resolvedCommitId = matched[0];
+    const commitDir = path.join(commitsPath, resolvedCommitId);
+
+    // Get all files in commit snapshot except commit.json
+    const filesToRestore = await getRelativeFiles(commitDir, commitDir, [
+      'commit.json',
+      '.DS_Store',
+    ]);
+
+    if (filesToRestore.length === 0) {
+      console.log(`Commit ${resolvedCommitId.slice(0, 8)} contains no tracked files.`);
+      return { success: true, restoredFiles: [] };
+    }
+
+    const restored = [];
+    for (const relFile of filesToRestore) {
+      const src = path.join(commitDir, relFile);
+      const dest = path.join(rootDir, relFile);
+
+      await fs.mkdir(path.dirname(dest), { recursive: true });
+      await fs.copyFile(src, dest);
+      restored.push(relFile);
+    }
+
+    console.log(`\nSuccessfully reverted workspace to commit ${resolvedCommitId.slice(0, 8)}:`);
+    for (const file of restored) {
+      console.log(`  Restored: ${file}`);
+    }
+    console.log(`\nTotal: ${restored.length} file(s) restored.\n`);
+
+    return {
+      success: true,
+      commitID: resolvedCommitId,
+      restoredFiles: restored,
+    };
   } catch (err) {
-    if (err.code === "ENOENT") {
-      console.error(`Unable to revert: commit ${commitHash} not found in .Groot/commits.`);
-    } else {
-      console.error("Unable to revert:", err);
-    }
+    console.error('Error reverting commit:', err.message);
+    return { success: false, error: err.message };
   }
 }
 

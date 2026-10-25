@@ -1,3 +1,10 @@
+# Environment and Groot metadata
+.env
+.env.local
+.groot/
+.Groot/
+sandbox_repo_*
+
 # Logs
 logs
 *.log

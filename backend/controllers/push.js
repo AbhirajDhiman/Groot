@@ -1,46 +1,91 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { S3_BUCKET, s3 } = require('../config/aws-config');
+const {
+  ensureRepoRoot,
+  getRelativeFiles,
+  readJson,
+} = require('../utils/repoUtils');
 
-const repoBase = path.resolve(__dirname, '..');
-
-const pushChanges = async () => {
-  const repoPath = path.join(repoBase, '.Groot');
-  const commitsPath = path.join(repoPath, 'commits');
-
+/**
+ * Pushes local commit snapshots and metadata to remote AWS S3 storage.
+ */
+async function pushChanges() {
   try {
+    const { grootDir } = await ensureRepoRoot();
+    const commitsPath = path.join(grootDir, 'commits');
+    const configPath = path.join(grootDir, 'config.json');
+
+    const repoConfig = (await readJson(configPath)) || {};
+    const targetBucket = repoConfig.bucket || S3_BUCKET;
+
+    if (!targetBucket) {
+      console.error('Error: No S3 bucket configured. Specify S3_BUCKET in .env or .groot/config.json');
+      return { success: false, error: 'No S3 bucket configured' };
+    }
+
     const entries = await fs.readdir(commitsPath, { withFileTypes: true });
-    const commitDirs = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+    const commitDirs = entries.filter((e) => e.isDirectory()).map((e) => e.name);
 
     if (commitDirs.length === 0) {
-      console.log('No commits found to push. Make sure you have committed changes before pushing.');
-      return;
+      console.log('No commits found to push. Create a commit first using "groot commit <message>".');
+      return { success: false, error: 'No commits to push' };
     }
 
-    for (const commitDir of commitDirs) {
-      const commitDirPath = path.join(commitsPath, commitDir);
-      const files = await fs.readdir(commitDirPath);
+    console.log(`Pushing ${commitDirs.length} commit(s) to remote bucket: ${targetBucket}...`);
 
-      for (const fileName of files) {
-        const filePath = path.join(commitDirPath, fileName);
-        const fileData = await fs.readFile(filePath);
-        const params = {
-          Bucket: S3_BUCKET,
-          Key: `commits/${commitDir}/${fileName}`,
-          Body: fileData,
-        };
+    let uploadedCount = 0;
+    for (const commitId of commitDirs) {
+      const commitDirPath = path.join(commitsPath, commitId);
+      const commitFiles = await getRelativeFiles(commitDirPath, commitDirPath);
 
-        await s3.upload(params).promise();
-        console.log(`Pushed ${fileName} from commit ${commitDir} to remote repository.`);
+      for (const relFile of commitFiles) {
+        const localPath = path.join(commitDirPath, relFile);
+        const data = await fs.readFile(localPath);
+        const remoteKey = `commits/${commitId}/${relFile}`;
+
+        await s3
+          .upload({
+            Bucket: targetBucket,
+            Key: remoteKey,
+            Body: data,
+          })
+          .promise();
+
+        uploadedCount++;
       }
     }
-  } catch (err) {
-    if (err.code === 'ENOENT') {
-      console.error('Push failed: repository or commits directory not found. Run init and create at least one commit.');
-    } else {
-      console.error('Error pushing changes to remote repository:', err);
+
+    // Push log.json and HEAD if present
+    const syncFiles = ['log.json', 'HEAD'];
+    for (const file of syncFiles) {
+      const filePath = path.join(grootDir, file);
+      try {
+        const content = await fs.readFile(filePath);
+        await s3
+          .upload({
+            Bucket: targetBucket,
+            Key: `metadata/${file}`,
+            Body: content,
+          })
+          .promise();
+      } catch {
+        // Optional file
+      }
     }
+
+    console.log(`Successfully pushed ${uploadedCount} object(s) across ${commitDirs.length} commit(s) to S3.`);
+    return { success: true, uploadedCount, commitCount: commitDirs.length };
+  } catch (err) {
+    if (err.code === 'NoSuchBucket') {
+      console.error(`Push failed: S3 bucket does not exist.`);
+    } else if (err.code === 'AccessDenied' || err.code === 'CredentialsError') {
+      console.error(`Push failed: AWS authentication failed. Check your AWS credentials in .env.`);
+    } else {
+      console.error('Error pushing changes to remote repository:', err.message);
+    }
+    return { success: false, error: err.message };
   }
-};
+}
 
 module.exports = { pushChanges };

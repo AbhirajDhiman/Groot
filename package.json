@@ -1,4 +1,17 @@
 {
+  "name": "groot",
+  "version": "1.0.0",
+  "description": "Groot - A lightweight backend version control system inspired by Git and GitHub",
+  "main": "backend/server.js",
+  "bin": {
+    "groot": "backend/index.js"
+  },
+  "scripts": {
+    "start": "node backend/server.js start",
+    "test": "node backend/test/test.js"
+  },
+  "author": "Groot Development Team",
+  "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.1693.0",
     "body-parser": "^2.3.0",
