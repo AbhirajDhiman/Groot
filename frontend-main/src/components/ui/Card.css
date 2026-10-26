@@ -1,0 +1,40 @@
+/* ============================================================
+   Card — surface container
+   ============================================================ */
+
+.card {
+  background-color: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+
+/* Flush variant — no padding, content manages its own spacing */
+.card--flush {
+  padding: 0;
+}
+
+/* Interactive card — hover effect for clickable cards */
+.card--interactive {
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-default),
+    background-color var(--duration-fast) var(--ease-default);
+}
+.card--interactive:hover {
+  border-color: var(--color-text-tertiary);
+  background-color: var(--color-surface-2);
+}
+.card--interactive:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Selected state — for selectable cards (e.g. visibility choice) */
+.card--selected {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-muted);
+}
+.card--selected:hover {
+  border-color: var(--color-accent-hover);
+}

@@ -1,17 +1,89 @@
-import React, { useState, useEffect } from "react";
-import "./dashboard.css";
-import Navbar from "../Navbar";
-import { API_BASE_URL } from "../../config/api";
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Search, GitBranch, Lock, Globe, Plus, AlertCircle, Clock } from 'lucide-react';
+import { API_BASE_URL } from '../../config/api';
+import PageLayout from '../PageLayout';
+import { Button, Badge, EmptyState, RepoCardSkeleton } from '../ui';
+import './dashboard.css';
+
+/* ------------------------------------------------------------------ */
+/* Helpers                                                              */
+/* ------------------------------------------------------------------ */
+
+/** Format an ISO date as "Updated X ago" */
+function timeAgo(dateStr) {
+  if (!dateStr) return null;
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  return `${months}mo ago`;
+}
+
+/* ------------------------------------------------------------------ */
+/* RepoCard                                                              */
+/* ------------------------------------------------------------------ */
+
+const RepoCard = ({ repo }) => {
+  const isPublic = repo.visibility === true || repo.visibility === 'public';
+
+  return (
+    <article className="repo-card">
+      <div className="repo-card__header">
+        <span className="repo-card__name">{repo.name}</span>
+        <Badge variant={isPublic ? 'public' : 'private'}>
+          {isPublic ? (
+            <>
+              <Globe size={10} aria-hidden="true" />
+              Public
+            </>
+          ) : (
+            <>
+              <Lock size={10} aria-hidden="true" />
+              Private
+            </>
+          )}
+        </Badge>
+      </div>
+
+      {repo.description && (
+        <p className="repo-card__description">{repo.description}</p>
+      )}
+
+      <div className="repo-card__meta">
+        {repo.updatedAt && (
+          <span className="repo-card__meta-item">
+            <Clock size={12} aria-hidden="true" />
+            {timeAgo(repo.updatedAt)}
+          </span>
+        )}
+      </div>
+    </article>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/* Dashboard                                                            */
+/* ------------------------------------------------------------------ */
 
 const Dashboard = () => {
   const [repositories, setRepositories] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('updated');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  // Legacy state kept to not break any downstream data flow
   const [suggestedRepositories, setSuggestedRepositories] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const userId = localStorage.getItem("userId");
+    const userId = localStorage.getItem('userId');
 
     const fetchRepositories = async () => {
       if (!userId) return;
@@ -21,7 +93,8 @@ const Dashboard = () => {
         const userRepos = Array.isArray(data.repositories) ? data.repositories : [];
         setRepositories(userRepos);
       } catch (err) {
-        console.error("Error while fetching user repositories: ", err);
+        console.error('Error while fetching user repositories: ', err);
+        setError('Could not load repositories. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -34,7 +107,7 @@ const Dashboard = () => {
         const allRepos = Array.isArray(data) ? data : (data.repositories || []);
         setSuggestedRepositories(allRepos);
       } catch (err) {
-        console.error("Error while fetching all repositories: ", err);
+        console.error('Error while fetching all repositories: ', err);
       }
     };
 
@@ -42,75 +115,118 @@ const Dashboard = () => {
     fetchSuggestedRepositories();
   }, []);
 
+  // Filter + sort
   useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setSearchResults(repositories);
-    } else {
-      const filteredRepo = repositories.filter((repo) =>
-        repo.name.toLowerCase().includes(searchQuery.toLowerCase())
+    let filtered = [...repositories];
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter((repo) =>
+        repo.name.toLowerCase().includes(q) ||
+        (repo.description || '').toLowerCase().includes(q)
       );
-      setSearchResults(filteredRepo);
     }
-  }, [searchQuery, repositories]);
+
+    if (sortBy === 'name') {
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortBy === 'updated') {
+      filtered.sort(
+        (a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0)
+      );
+    }
+
+    setSearchResults(filtered);
+  }, [searchQuery, repositories, sortBy]);
 
   return (
-    <>
-      <Navbar />
-      <section id="dashboard">
-        <aside>
-          <h3>Explore Repositories</h3>
-          {suggestedRepositories.length === 0 ? (
-            <p style={{ color: "#8b949e", fontSize: "14px" }}>No public repositories yet.</p>
-          ) : (
-            suggestedRepositories.map((repo) => (
-              <div key={repo._id} style={{ marginBottom: "12px" }}>
-                <h4 style={{ color: "#58a6ff" }}>{repo.name}</h4>
-                <p style={{ color: "#8b949e", fontSize: "13px" }}>{repo.description || "No description provided"}</p>
-              </div>
-            ))
-          )}
-        </aside>
-        <main>
-          <h2>Your Repositories</h2>
-          <div id="search">
-            <input
-              type="text"
-              value={searchQuery}
-              placeholder="Search your repositories..."
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          {loading ? (
-            <p style={{ color: "#8b949e" }}>Loading repositories...</p>
-          ) : searchResults.length === 0 ? (
-            <div style={{ color: "#8b949e", marginTop: "20px" }}>
-              <p>No repositories found. Create your first repository!</p>
-            </div>
-          ) : (
-            searchResults.map((repo) => (
-              <div key={repo._id} style={{ padding: "12px 0", borderBottom: "1px solid #30363d" }}>
-                <h4 style={{ color: "#58a6ff" }}>{repo.name}</h4>
-                <p style={{ color: "#8b949e", fontSize: "13px" }}>{repo.description || "No description"}</p>
-              </div>
-            ))
-          )}
-        </main>
-        <aside>
-          <h3>Groot VCS Activity</h3>
-          <ul>
-            <li>
-              <p>Branchless snapshots enabled</p>
-            </li>
-            <li>
-              <p>AWS S3 Cloud Sync active</p>
-            </li>
-            <li>
-              <p>REST API Engine on port 3000</p>
-            </li>
-          </ul>
-        </aside>
-      </section>
-    </>
+    <PageLayout>
+      {/* Header */}
+      <div className="dashboard__header">
+        <h1 className="dashboard__title">Repositories</h1>
+        <Link to="/create">
+          <Button variant="primary" size="sm">
+            <Plus size={15} aria-hidden="true" />
+            New repository
+          </Button>
+        </Link>
+      </div>
+
+      {/* Toolbar */}
+      <div className="dashboard__toolbar">
+        <div className="dashboard__search-wrapper">
+          <Search
+            size={15}
+            className="dashboard__search-icon"
+            aria-hidden="true"
+          />
+          <input
+            className="dashboard__search"
+            type="search"
+            placeholder="Find a repository…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="Search repositories"
+          />
+        </div>
+
+        <select
+          className="dashboard__sort"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          aria-label="Sort repositories"
+        >
+          <option value="updated">Last updated</option>
+          <option value="name">Name</option>
+        </select>
+      </div>
+
+      {/* Error */}
+      {error && !loading && (
+        <div className="dashboard__error" role="alert">
+          <AlertCircle size={16} aria-hidden="true" />
+          {error}
+        </div>
+      )}
+
+      {/* Content */}
+      {loading ? (
+        <div className="skeleton-list" aria-label="Loading repositories" aria-busy="true">
+          {[...Array(4)].map((_, i) => (
+            <RepoCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : searchResults.length === 0 ? (
+        <EmptyState
+          icon={<GitBranch size={48} />}
+          title={
+            searchQuery
+              ? `No results for "${searchQuery}"`
+              : 'No repositories yet'
+          }
+          description={
+            searchQuery
+              ? 'Try a different search term.'
+              : 'Create your first Groot repository to start tracking changes.'
+          }
+          action={
+            !searchQuery && (
+              <Link to="/create">
+                <Button variant="primary">
+                  <Plus size={15} aria-hidden="true" />
+                  Create repository
+                </Button>
+              </Link>
+            )
+          }
+        />
+      ) : (
+        <div className="repo-grid">
+          {searchResults.map((repo) => (
+            <RepoCard key={repo._id} repo={repo} />
+          ))}
+        </div>
+      )}
+    </PageLayout>
   );
 };
 

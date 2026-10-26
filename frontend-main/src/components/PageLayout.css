@@ -1,0 +1,45 @@
+/* ============================================================
+   PageLayout — content container used by all pages
+   ============================================================ */
+
+.page-layout {
+  min-height: calc(100vh - var(--nav-height));
+  display: flex;
+  flex-direction: column;
+}
+
+.page-layout__content {
+  flex: 1;
+  width: 100%;
+  max-width: var(--max-width-content);
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6);
+}
+
+/* Narrow variant — for single-column forms (auth, create repo) */
+.page-layout__content--narrow {
+  max-width: 600px;
+}
+
+/* Centered variant — for auth pages */
+.page-layout__content--centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - var(--nav-height));
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-8);
+}
+
+@media (max-width: 640px) {
+  .page-layout__content {
+    padding: var(--space-6) var(--space-4);
+  }
+}
+
+@media (max-width: 360px) {
+  .page-layout__content {
+    padding: var(--space-4) var(--space-3);
+  }
+}

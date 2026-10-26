@@ -1,0 +1,109 @@
+/* ============================================================
+   Input & Textarea — form field primitives
+   ============================================================ */
+
+/* --- Field wrapper (label + input + hint/error) --- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.field__label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-primary);
+}
+
+.field__label--required::after {
+  content: ' *';
+  color: var(--color-danger);
+}
+
+.field__hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  line-height: var(--leading-snug);
+}
+
+.field__error {
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* --- Input / Textarea base --- */
+.input,
+.textarea {
+  width: 100%;
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  transition:
+    border-color var(--duration-fast) var(--ease-default),
+    background-color var(--duration-fast) var(--ease-default);
+}
+
+.input {
+  height: 36px;
+  padding: 0 var(--space-3);
+}
+
+.textarea {
+  padding: var(--space-2) var(--space-3);
+  resize: vertical;
+  min-height: 80px;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--color-text-disabled);
+}
+
+.input:hover:not(:disabled),
+.textarea:hover:not(:disabled) {
+  border-color: var(--color-text-tertiary);
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  background-color: var(--color-surface-1);
+}
+
+.input:focus-visible,
+.textarea:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 0;
+  border-color: var(--color-accent);
+}
+
+.input:disabled,
+.textarea:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Error state */
+.input--error,
+.textarea--error {
+  border-color: var(--color-danger-border);
+}
+.input--error:focus,
+.textarea--error:focus {
+  border-color: var(--color-danger);
+}
+
+/* Mono variant (repo names, paths, hashes) */
+.input--mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: -0.01em;
+}

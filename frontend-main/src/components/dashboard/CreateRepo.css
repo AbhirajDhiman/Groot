@@ -1,0 +1,160 @@
+/* ============================================================
+   CreateRepo page
+   ============================================================ */
+
+.create-repo__header {
+  margin-bottom: var(--space-8);
+}
+
+.create-repo__title {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semi);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.create-repo__subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-normal);
+}
+
+/* --- Form card --- */
+.create-repo__card {
+  background-color: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+}
+
+.create-repo__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* --- Divider --- */
+.create-repo__divider {
+  height: 1px;
+  background-color: var(--color-border);
+  margin: 0 calc(-1 * var(--space-8));
+}
+
+/* --- Error banner --- */
+.create-repo__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-danger-muted);
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+  line-height: var(--leading-snug);
+}
+
+/* --- Visibility choice cards --- */
+.visibility-label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-3);
+}
+
+.visibility-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.visibility-option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-default),
+    background-color var(--duration-fast) var(--ease-default);
+  /* hide native radio */
+  position: relative;
+}
+.visibility-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.visibility-option:hover {
+  border-color: var(--color-text-tertiary);
+  background-color: var(--color-surface-3);
+}
+.visibility-option:focus-within {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 0;
+  border-color: var(--color-accent);
+}
+.visibility-option--selected {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-muted);
+}
+.visibility-option--selected:hover {
+  border-color: var(--color-accent-hover);
+}
+
+.visibility-option__icon {
+  color: var(--color-text-secondary);
+  width: 20px;
+  height: 20px;
+}
+.visibility-option--selected .visibility-option__icon {
+  color: var(--color-accent);
+}
+
+.visibility-option__title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semi);
+  color: var(--color-text-primary);
+}
+
+.visibility-option__desc {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  line-height: var(--leading-snug);
+}
+
+/* --- Submit row --- */
+.create-repo__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+}
+
+/* --- Responsive --- */
+@media (max-width: 480px) {
+  .create-repo__card {
+    padding: var(--space-6) var(--space-5);
+  }
+  .create-repo__divider {
+    margin: 0 calc(-1 * var(--space-5));
+  }
+  .visibility-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 360px) {
+  .create-repo__card {
+    padding: var(--space-5) var(--space-4);
+  }
+  .create-repo__divider {
+    margin: 0 calc(-1 * var(--space-4));
+  }
+}

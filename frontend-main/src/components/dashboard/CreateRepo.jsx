@@ -1,33 +1,36 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import Navbar from "../Navbar";
-import { API_BASE_URL } from "../../config/api";
-import { Button } from "@primer/react";
-import "./dashboard.css";
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Globe, Lock, AlertCircle } from 'lucide-react';
+import axios from 'axios';
+import { API_BASE_URL } from '../../config/api';
+import PageLayout from '../PageLayout';
+import { Button } from '../ui';
+import { Input, Textarea } from '../ui';
+import './dashboard.css';
+import './CreateRepo.css';
 
 const CreateRepo = () => {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [visibility, setVisibility] = useState(true);
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [visibility, setVisibility] = useState(true);   // true = public
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    setError("");
+    setError('');
 
     if (!name.trim()) {
-      setError("Repository name is required.");
+      setError('Repository name is required.');
       return;
     }
 
-    const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem('userId');
+    const token = localStorage.getItem('token');
 
     if (!userId) {
-      navigate("/auth");
+      navigate('/auth');
       return;
     }
 
@@ -47,104 +50,124 @@ const CreateRepo = () => {
       );
 
       setLoading(false);
-      navigate("/");
+      navigate('/');
     } catch (err) {
-      console.error("Error creating repository:", err);
-      const msg = err.response?.data?.error || "Failed to create repository.";
+      console.error('Error creating repository:', err);
+      const msg = err.response?.data?.error || 'Failed to create repository.';
       setError(msg);
       setLoading(false);
     }
   };
 
   return (
-    <>
-      <Navbar />
-      <div style={{ maxWidth: "600px", margin: "40px auto", padding: "20px", color: "#c9d1d9" }}>
-        <h2 style={{ borderBottom: "1px solid #30363d", paddingBottom: "10px" }}>Create a new Groot repository</h2>
-        <p style={{ color: "#8b949e", fontSize: "14px", marginBottom: "20px" }}>
+    <PageLayout narrow>
+      <div className="create-repo__header">
+        <h1 className="create-repo__title">Create a new repository</h1>
+        <p className="create-repo__subtitle">
           A repository contains all project files, including the revision history.
         </p>
+      </div>
 
+      <div className="create-repo__card">
         {error && (
-          <div style={{ color: "#f85149", backgroundColor: "#3a1d1d", padding: "10px", borderRadius: "6px", marginBottom: "16px" }}>
+          <div className="create-repo__error" role="alert">
+            <AlertCircle size={16} aria-hidden="true" />
             {error}
           </div>
         )}
 
-        <form onSubmit={handleCreate}>
-          <div style={{ marginBottom: "16px" }}>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>Repository name *</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., my-awesome-project"
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                backgroundColor: "#0d1117",
-                border: "1px solid #30363d",
-                borderRadius: "6px",
-                color: "#c9d1d9",
-              }}
-              required
-            />
-          </div>
+        <form className="create-repo__form" onSubmit={handleCreate} noValidate>
+          <Input
+            label="Repository name"
+            id="repo-name"
+            name="repo-name"
+            type="text"
+            placeholder="e.g. my-awesome-project"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            disabled={loading}
+            mono
+            hint="Use lowercase letters, numbers, and hyphens."
+          />
 
-          <div style={{ marginBottom: "16px" }}>
-            <label style={{ display: "block", marginBottom: "6px", fontWeight: "600" }}>Description (optional)</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief description of your repository"
-              rows={3}
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                backgroundColor: "#0d1117",
-                border: "1px solid #30363d",
-                borderRadius: "6px",
-                color: "#c9d1d9",
-                resize: "vertical",
-              }}
-            />
-          </div>
+          <div className="create-repo__divider" role="separator" />
 
-          <div style={{ marginBottom: "24px" }}>
-            <label style={{ display: "block", marginBottom: "8px", fontWeight: "600" }}>Visibility</label>
-            <div style={{ display: "flex", gap: "20px" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+          <Textarea
+            label="Description"
+            id="repo-description"
+            name="repo-description"
+            placeholder="Brief description of your repository (optional)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            disabled={loading}
+            rows={3}
+          />
+
+          <div className="create-repo__divider" role="separator" />
+
+          {/* Visibility — selectable cards */}
+          <fieldset style={{ border: 'none', padding: 0 }}>
+            <legend className="visibility-label">Visibility</legend>
+            <div className="visibility-options">
+              {/* Public */}
+              <label
+                className={`visibility-option${visibility === true ? ' visibility-option--selected' : ''}`}
+                htmlFor="vis-public"
+              >
                 <input
                   type="radio"
+                  id="vis-public"
                   name="visibility"
+                  value="public"
                   checked={visibility === true}
                   onChange={() => setVisibility(true)}
+                  disabled={loading}
                 />
-                Public
+                <Globe className="visibility-option__icon" aria-hidden="true" />
+                <span className="visibility-option__title">Public</span>
+                <span className="visibility-option__desc">
+                  Anyone can see this repository.
+                </span>
               </label>
-              <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+
+              {/* Private */}
+              <label
+                className={`visibility-option${visibility === false ? ' visibility-option--selected' : ''}`}
+                htmlFor="vis-private"
+              >
                 <input
                   type="radio"
+                  id="vis-private"
                   name="visibility"
+                  value="private"
                   checked={visibility === false}
                   onChange={() => setVisibility(false)}
+                  disabled={loading}
                 />
-                Private
+                <Lock className="visibility-option__icon" aria-hidden="true" />
+                <span className="visibility-option__title">Private</span>
+                <span className="visibility-option__desc">
+                  Only you can see this repository.
+                </span>
               </label>
             </div>
-          </div>
+          </fieldset>
 
-          <Button
-            variant="primary"
-            type="submit"
-            disabled={loading}
-            style={{ width: "100%", padding: "10px" }}
-          >
-            {loading ? "Creating..." : "Create repository"}
-          </Button>
+          {/* Actions */}
+          <div className="create-repo__actions">
+            <Link to="/">
+              <Button variant="secondary" type="button" disabled={loading}>
+                Cancel
+              </Button>
+            </Link>
+            <Button type="submit" loading={loading} disabled={loading}>
+              Create repository
+            </Button>
+          </div>
         </form>
       </div>
-    </>
+    </PageLayout>
   );
 };
 

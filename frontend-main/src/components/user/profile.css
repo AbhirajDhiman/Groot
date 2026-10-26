@@ -1,105 +1,167 @@
-.profile-page-wrapper {
-  display: flex;
-  min-height: 100vh;
-  color: whitesmoke;
-  width: 100%;
-  /* flex-wrap: wrap; */
+/* ============================================================
+   Profile page
+   ============================================================ */
+
+/* --- Layout --- */
+.profile-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: var(--space-10);
+  align-items: start;
 }
 
-.user-profile-section {
-  width: 250px;
-  /* min-height: 100vh; */
-  display: flex;
-  flex-direction: column;
-  padding: 40px 10px;
-}
-
-.user-repo-section {
-  margin: 0px auto;
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.user-name {
-  /* width: 250px; */
-  margin: 10px 20px 10px 10px;
-  /* margin: 10px auto; */
-}
-
-.profile-image {
-  margin: 10px auto;
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  background-color: grey;
-}
-
-.follow-btn {
-  background-color: #20272d;
-  width: 250px;
-  margin: 10px auto;
-  height: 40px;
-  border-radius: 10px;
-  color: whitesmoke;
-}
-
-.follower {
-  display: flex;
-  justify-content: center;
-  width: 250px;
-  height: 30px;
-  gap: 10px;
-  margin: 10px auto;
-}
-
-.repo-card-wrapper {
-  margin: 0 auto;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 20px;
-  padding: 40px 20px;
-}
-
-.repo {
-  border: 0.5px solid grey;
-  border-radius: 10px;
-  width: 400px;
-  height: 210px;
-  padding: 20px 10px;
+/* --- Sidebar --- */
+.profile-sidebar {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: var(--space-5);
+  position: sticky;
+  top: calc(var(--nav-height) + var(--space-8));
 }
 
-.repo-name {
-  cursor: pointer;
-  color: #408ced;
-  font-size: 20px;
+.profile-avatar-wrapper {
+  display: flex;
+  justify-content: center;
 }
 
-.description {
-  color: grey;
-  font-size: 15px;
+/* Override avatar size for profile */
+.profile-avatar-wrapper .avatar--2xl {
+  width: 200px;
+  height: 200px;
+  font-size: 64px;
+  border: 2px solid var(--color-border);
 }
 
-@media screen and (max-width: 750px) {
-  .repo {
-    width: 100%;
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.profile-username {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.profile-email {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.profile-badge-row {
+  margin-top: var(--space-1);
+}
+
+.profile-stats {
+  display: flex;
+  gap: var(--space-5);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.profile-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-stat__value {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-primary);
+  line-height: 1;
+}
+
+.profile-stat__label {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* --- Main content --- */
+.profile-main {
+  min-width: 0;
+}
+
+.profile-section-title {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semi);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* --- Heatmap card --- */
+.profile-heatmap-card {
+  background-color: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-6);
+  overflow-x: auto;
+}
+
+.profile-heatmap-card .HeatMapProfile text {
+  fill: var(--color-text-tertiary) !important;
+}
+
+/* --- Profile repo list (reuses dashboard cards) --- */
+.profile-repos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* --- Error / loading --- */
+.profile-loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.profile-sidebar-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+  }
+
+  .profile-sidebar {
+    position: static;
+    align-items: center;
+    text-align: center;
+  }
+
+  .profile-stats {
+    justify-content: center;
+  }
+
+  .profile-avatar-wrapper .avatar--2xl {
+    width: 120px;
+    height: 120px;
+    font-size: 40px;
   }
 }
 
-@media screen and (max-width: 570px) {
-  .user-profile-section {
-    margin: auto;
+@media (max-width: 480px) {
+  .profile-layout {
+    gap: var(--space-6);
   }
-
-  .profile-page-wrapper {
-    display: block;
-  }
-}
-
-#logout:hover {
-  border: 1px solid white;
 }

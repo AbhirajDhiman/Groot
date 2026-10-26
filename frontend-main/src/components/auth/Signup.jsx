@@ -1,30 +1,27 @@
-import React, { useState } from "react";
-import axios from "axios";
-import { useAuth } from "../../authContext";
-import { API_BASE_URL } from "../../config/api";
-
-import { PageHeader } from "@primer/react/drafts";
-import { Box, Button } from "@primer/react";
-import "./auth.css";
-
-import logo from "../../assets/github-mark-white.svg";
-import { Link } from "react-router-dom";
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { GitBranch, AlertCircle } from 'lucide-react';
+import axios from 'axios';
+import { useAuth } from '../../authContext';
+import { API_BASE_URL } from '../../config/api';
+import { Button } from '../ui';
+import { Input } from '../ui';
+import './auth.css';
 
 const Signup = () => {
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
+  const [error, setError] = useState('');
   const { setCurrentUser } = useAuth();
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    setError("");
+    setError('');
 
     if (!username || !email || !password) {
-      setError("Please fill in all fields.");
+      setError('Please fill in all fields.');
       return;
     }
 
@@ -36,99 +33,91 @@ const Signup = () => {
         username: username,
       });
 
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("userId", res.data.userId);
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('userId', res.data.userId);
 
       setCurrentUser(res.data.userId);
       setLoading(false);
 
-      window.location.href = "/";
+      window.location.href = '/';
     } catch (err) {
       console.error(err);
-      const message = err.response?.data?.error || "Signup Failed! Please check your details.";
+      const message =
+        err.response?.data?.error || 'Signup failed. Please check your details.';
       setError(message);
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-wrapper">
-      <div className="login-logo-container">
-        <img className="logo-login" src={logo} alt="Logo" />
-      </div>
+    <div className="auth-page">
+      {/* Brand */}
+      <Link to="/auth" className="auth-page__brand" aria-label="Groot home">
+        <GitBranch className="auth-page__brand-icon" aria-hidden="true" />
+        <span className="auth-page__brand-name">groot</span>
+      </Link>
 
-      <div className="login-box-wrapper">
-        <div className="login-heading">
-          <Box sx={{ padding: 1 }}>
-            <PageHeader>
-              <PageHeader.TitleArea variant="large">
-                <PageHeader.Title>Join Groot</PageHeader.Title>
-              </PageHeader.TitleArea>
-            </PageHeader>
-          </Box>
-        </div>
+      {/* Main card */}
+      <div className="auth-card">
+        <h1 className="auth-card__title">Create your account</h1>
 
         {error && (
-          <div style={{ color: "#f85149", textAlign: "center", marginBottom: "12px", fontSize: "14px" }}>
+          <div className="auth-card__error" role="alert">
+            <AlertCircle size={16} className="auth-card__error-icon" aria-hidden="true" />
             {error}
           </div>
         )}
 
-        <div className="login-box">
-          <div>
-            <label className="label">Username</label>
-            <input
-              autoComplete="off"
-              name="Username"
-              id="Username"
-              className="input"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="label">Email address</label>
-            <input
-              autoComplete="off"
-              name="Email"
-              id="Email"
-              className="input"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-
-          <div className="div">
-            <label className="label">Password</label>
-            <input
-              autoComplete="off"
-              name="Password"
-              id="Password"
-              className="input"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-
-          <Button
-            variant="primary"
-            className="login-btn"
+        <form className="auth-card__form" onSubmit={handleSignup} noValidate>
+          <Input
+            label="Username"
+            id="Username"
+            name="Username"
+            type="text"
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
             disabled={loading}
-            onClick={handleSignup}
-          >
-            {loading ? "Creating account..." : "Sign up"}
-          </Button>
-        </div>
+            mono
+          />
 
-        <div className="pass-box">
-          <p>
-            Already have an account? <Link to="/auth">Sign in</Link>
-          </p>
-        </div>
+          <Input
+            label="Email address"
+            id="Email"
+            name="Email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={loading}
+          />
+
+          <Input
+            label="Password"
+            id="Password"
+            name="Password"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            disabled={loading}
+          />
+
+          <div className="auth-card__submit">
+            <Button type="submit" full loading={loading} disabled={loading}>
+              {loading ? 'Creating account…' : 'Create account'}
+            </Button>
+          </div>
+        </form>
+      </div>
+
+      {/* Footer */}
+      <div className="auth-footer">
+        Already have an account?{' '}
+        <Link to="/auth">Sign in</Link>
       </div>
     </div>
   );
