@@ -3,8 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { GitBranch, Plus, User, LogOut, ChevronDown, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../authContext';
 import { Avatar } from './ui';
-import './Navbar.css';
-// Remove old navbar.css — this file replaces it entirely
+import './navbar.css';
 
 const Navbar = () => {
   const { currentUser, setCurrentUser } = useAuth();
